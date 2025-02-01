@@ -1,0 +1,62 @@
+service: vehicle-catalog-service
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  stage: ${{ secrets.STAGE }}
+  region: ${{ secrets.AWS_REGION }}
+  memorySize: 128
+  timeout: 3
+  environment:
+    VEHICLE_TABLE: vehicles
+    DB_HOST: ${{ secrets.RDS_DB_HOST }}
+    DB_USER: ${{ secrets.RDS_DB_USER }}
+    DB_PASSWORD: ${{ secrets.RDS_DB_PASSWORD }}
+    DB_NAME: ${{ secrets.RDS_DB_NAME }}
+    DB_PORT: ${{ secrets.RDS_DB_POST }}
+
+functions:
+  createVehicle:
+    handler: src/handlers/CreateVehicle.handler
+    description: Create New Vehicles
+    environment:
+      DB_HOST: ${{ secrets.RDS_DB_HOST }}
+      DB_USER: ${{ secrets.RDS_DB_USER }}
+      DB_PASSWORD: ${{ secrets.RDS_DB_PASSWORD }}
+      DB_NAME: ${{ secrets.RDS_DB_NAME }}
+      DB_PORT: ${{ secrets.RDS_DB_POST }}
+    events:
+      - http:
+          path: vehicle
+          method: post
+          cors: true
+
+  listVehicles:
+    handler: src/handlers/ListVehicles.handler
+    description: List all vehicles
+    environment:
+      DB_HOST: ${{ secrets.RDS_DB_HOST }}
+      DB_USER: ${{ secrets.RDS_DB_USER }}
+      DB_PASSWORD: ${{ secrets.RDS_DB_PASSWORD }}
+      DB_NAME: ${{ secrets.RDS_DB_NAME }}
+      DB_PORT: ${{ secrets.RDS_DB_POST }}
+    events:
+      - http:
+          path: vehicle
+          method: get
+          cors: true
+
+  updateVehicle:
+    handler: src/handlers/UpdateVehicle.handler
+    description: Update vehicles data
+    environment:
+      DB_HOST: ${{ secrets.RDS_DB_HOST }}
+      DB_USER: ${{ secrets.RDS_DB_USER }}
+      DB_PASSWORD: ${{ secrets.RDS_DB_PASSWORD }}
+      DB_NAME: ${{ secrets.RDS_DB_NAME }}
+      DB_PORT: ${{ secrets.RDS_DB_POST }}
+    events:
+      - http:
+          path: vehicle
+          method: put
+          cors: true
