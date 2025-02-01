@@ -14,7 +14,7 @@ Resources:
   CreateVehicleFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: src/
       Handler: app.lambdaCreateVehicle
       Runtime: nodejs22.x
       Environment:
@@ -44,7 +44,7 @@ Resources:
   ListVehiclesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: src/
       Handler: app.lambdaListVehicle
       Runtime: nodejs22.x
       Environment:
@@ -74,7 +74,7 @@ Resources:
   UpdateVehicleFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambdas/
+      CodeUri: src/
       Handler: app.lambdaUpdateVehicle
       Runtime: nodejs22.x
       Environment:
