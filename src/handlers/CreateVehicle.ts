@@ -1,26 +1,28 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 import { validateDto } from "../utils";
-import { ListVehicleDTO } from "../dtos";
+import { CreateVehicleDTO } from "../dtos";
 import { VehicleRepository } from "../repositories";
 
-export const ListVehicle = async (
+export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  const searchParams = event.queryStringParameters || {};
+  if (!event.body) {
+    return { statusCode: 400, body: "Request body is missing" };
+  }
 
-  const dto = await validateDto(ListVehicleDTO, searchParams);
+  const dto = await validateDto(CreateVehicleDTO, JSON.parse(event.body));
   const repository = new VehicleRepository();
 
   try {
-    const result = await repository.list(dto);
+    const result = await repository.create(dto);
 
     return {
-      statusCode: 200,
+      statusCode: 201,
       body: JSON.stringify(result),
     };
   } catch (error) {
-    console.error("Error listing vehicles:", error);
+    console.error("Error creating vehicles:", error);
     return { statusCode: 500, body: "Internal Server Error" };
   }
 };

@@ -1,11 +1,12 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { CreateVehicle } from "./handlers/create-vehicles.lambda";
-import { ListVehicle } from "./handlers/list-vehicles.lambda";
-import { UpdateVehicle } from "./handlers/update-vehicles.lambda";
+
+import { handler as CreateVehicle } from "./handlers/CreateVehicle";
+import { handler as UpdateVehicle } from "./handlers/UpdateVehicle";
+import { handler as ListVehicle } from "./handlers/ListVehicles";
 
 export const lambdaCreateVehicle = CreateVehicle;
-export const lambdaListVehicle = ListVehicle;
 export const lambdaUpdateVehicle = UpdateVehicle;
+export const lambdaListVehicle = ListVehicle;
 
 export const lambdaHandler = async (
   event: APIGatewayProxyEvent

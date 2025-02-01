@@ -1,10 +1,10 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
-import { pool, validateDto } from "../utils";
+import { validateDto } from "../utils";
 import { UpdateVehicleDTO } from "../dtos";
 import { VehicleRepository } from "../repositories";
 
-export const UpdateVehicle = async (
+export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   if (!event.body) {
