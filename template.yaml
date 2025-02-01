@@ -71,6 +71,36 @@ Resources:
         EntryPoints:
           - app.ts
 
+  UpdateVehicleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/
+      Handler: app.lambdaUpdateVehicle
+      Runtime: nodejs22.x
+      Environment:
+        Variables:
+          DB_HOST: 172.17.0.1
+          DB_USER: _user_aplic
+          DB_PASSWORD: root
+          DB_NAME: vcsdatabase
+          DB_PORT: 5432
+      Architectures:
+        - x86_64
+      Events:
+        ListVehicles:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /vehicle
+            Method: put
+    Metadata: # Manage esbuild properties
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints:
+          - app.ts
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
@@ -84,3 +114,6 @@ Outputs:
   ListVehiclesFunction:
     Description: "List Vehicles Function Lambda Function ARN"
     Value: !GetAtt ListVehiclesFunction.Arn
+  UpdateVehicleFunction:
+    Description: "Update Vehicle Function Lambda Function ARN"
+    Value: !GetAtt UpdateVehicleFunction.Arn
