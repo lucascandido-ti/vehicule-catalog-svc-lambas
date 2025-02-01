@@ -4,15 +4,12 @@ import { Transform, Type } from "class-transformer";
 import {
   IsEnum,
   IsIn,
-  IsInstance,
   IsNumber,
   IsOptional,
   IsString,
   Max,
   Min,
-  ValidateNested,
 } from "class-validator";
-import { ParseJson } from "../utils";
 
 export enum SortOrder {
   ASC = "ASC",

@@ -6,6 +6,6 @@ export const VehicleSchema = `
     year INTEGER NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     mileage INTEGER,
-    status VARCHAR(50) NOT NULL CHECK (status IN ('AVAILABLE', 'SOLD'))
+    status VARCHAR(50) NOT NULL CHECK (status IN ('AVAILABLE', 'RESERVED', 'SOLD'))
   );
 `;

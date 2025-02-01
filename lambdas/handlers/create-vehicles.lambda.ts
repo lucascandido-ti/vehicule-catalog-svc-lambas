@@ -1,6 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { Vehicle } from "../models/vehicle.model";
-import { pool } from "../utils";
+
+import { validateDto } from "../utils";
+import { CreateVehicleDTO } from "../dtos";
+import { VehicleRepository } from "../repositories";
 
 export const CreateVehicle = async (
   event: APIGatewayProxyEvent
@@ -9,26 +11,15 @@ export const CreateVehicle = async (
     return { statusCode: 400, body: "Request body is missing" };
   }
 
-  try {
-    const vehicle: Vehicle = JSON.parse(event.body);
-    const query = `
-      INSERT INTO vehicles (brand, model, year, price, mileage, status)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *;
-    `;
-    const values = [
-      vehicle.brand,
-      vehicle.model,
-      vehicle.year,
-      vehicle.price,
-      vehicle.mileage || null,
-      vehicle.status,
-    ];
+  const dto = await validateDto(CreateVehicleDTO, JSON.parse(event.body));
+  const repository = new VehicleRepository();
 
-    const result = await pool.query(query, values);
+  try {
+    const result = await repository.create(dto);
+
     return {
       statusCode: 201,
-      body: JSON.stringify(result.rows[0]),
+      body: JSON.stringify(result),
     };
   } catch (error) {
     console.error("Error creating vehicles:", error);
