@@ -10,8 +10,11 @@
     },
     "dependencies": {
         "aws-sdk": "^2.1565.0",
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.13.2",
         "esbuild": "^0.14.14",
-        "pg": "^8.11.3"
+        "pg": "^8.11.3",
+        "reflect-metadata": "^0.2.2"
     },
     "devDependencies": {
         "@jest/globals": "^29.2.0",
