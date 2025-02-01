@@ -1,7 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { Vehicle } from "../models/vehicle.model";
-import { pool } from "../utils";
-import { NotFoundVehicleException } from "../exceptions";
+
+import { pool, validateDto } from "../utils";
+import { UpdateVehicleDTO } from "../dtos";
+import { VehicleRepository } from "../repositories";
 
 export const UpdateVehicle = async (
   event: APIGatewayProxyEvent
@@ -10,36 +11,15 @@ export const UpdateVehicle = async (
     return { statusCode: 400, body: "Request body is missing" };
   }
 
+  const dto = await validateDto(UpdateVehicleDTO, JSON.parse(event.body));
+  const repository = new VehicleRepository();
+
   try {
-    const dto: Vehicle = JSON.parse(event.body);
+    const result = await repository.update(dto);
 
-    const vehicle = await pool.query<Vehicle[]>(
-      "SELECT id FROM vehicles WHERE id = $1;",
-      [dto.id]
-    );
-
-    if (!vehicle.rows.length)
-      throw new NotFoundVehicleException("Vehicule not found");
-
-    const query = `
-      UPDATE vehicles
-      SET brand=$1, model=$2, year=$3, price=$4, mileage=$5
-      WHERE id=$6
-      RETURNING *;
-    `;
-    const values = [
-      dto.brand,
-      dto.model,
-      dto.year,
-      dto.price,
-      dto.mileage,
-      dto.id,
-    ];
-
-    const result = await pool.query(query, values);
     return {
       statusCode: 201,
-      body: JSON.stringify(result.rows[0]),
+      body: JSON.stringify(result),
     };
   } catch (error: any) {
     console.error("Error creating vehicles:", error);
