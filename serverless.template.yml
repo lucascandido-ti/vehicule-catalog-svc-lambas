@@ -3,28 +3,30 @@ service: vehicle-catalog-service
 provider:
   name: aws
   runtime: nodejs22.x
-  stage: ${{ secrets.STAGE }}
-  region: ${{ secrets.AWS_REGION }}
+  stage: dev
+  region: us-east-1
   memorySize: 128
   timeout: 3
   environment:
     VEHICLE_TABLE: vehicles
-    DB_HOST: ${{ secrets.RDS_DB_HOST }}
-    DB_USER: ${{ secrets.RDS_DB_USER }}
-    DB_PASSWORD: ${{ secrets.RDS_DB_PASSWORD }}
-    DB_NAME: ${{ secrets.RDS_DB_NAME }}
-    DB_PORT: ${{ secrets.RDS_DB_POST }}
+    SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+    DB_HOST: localhost
+    DB_USER: postgres
+    DB_PASSWORD: admintest
+    DB_NAME: postgres
+    DB_PORT: 5432
 
 functions:
   createVehicle:
     handler: src/handlers/CreateVehicle.handler
     description: Create New Vehicles
     environment:
-      DB_HOST: ${{ secrets.RDS_DB_HOST }}
-      DB_USER: ${{ secrets.RDS_DB_USER }}
-      DB_PASSWORD: ${{ secrets.RDS_DB_PASSWORD }}
-      DB_NAME: ${{ secrets.RDS_DB_NAME }}
-      DB_PORT: ${{ secrets.RDS_DB_POST }}
+      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASSWORD: admintest
+      DB_NAME: postgres
+      DB_PORT: 5432
     events:
       - http:
           path: vehicle
@@ -35,14 +37,31 @@ functions:
     handler: src/handlers/ListVehicles.handler
     description: List all vehicles
     environment:
-      DB_HOST: ${{ secrets.RDS_DB_HOST }}
-      DB_USER: ${{ secrets.RDS_DB_USER }}
-      DB_PASSWORD: ${{ secrets.RDS_DB_PASSWORD }}
-      DB_NAME: ${{ secrets.RDS_DB_NAME }}
-      DB_PORT: ${{ secrets.RDS_DB_POST }}
+      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASSWORD: admintest
+      DB_NAME: postgres
+      DB_PORT: 5432
     events:
       - http:
           path: vehicle
+          method: get
+          cors: true
+
+  getVehicleById:
+    handler: src/handlers/GetVehicleById.handler
+    description: Get vehicle by id
+    environment:
+      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASSWORD: admintest
+      DB_NAME: postgres
+      DB_PORT: 5432
+    events:
+      - http:
+          path: vehicle/{id}
           method: get
           cors: true
 
@@ -50,13 +69,30 @@ functions:
     handler: src/handlers/UpdateVehicle.handler
     description: Update vehicles data
     environment:
-      DB_HOST: ${{ secrets.RDS_DB_HOST }}
-      DB_USER: ${{ secrets.RDS_DB_USER }}
-      DB_PASSWORD: ${{ secrets.RDS_DB_PASSWORD }}
-      DB_NAME: ${{ secrets.RDS_DB_NAME }}
-      DB_PORT: ${{ secrets.RDS_DB_POST }}
+      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASSWORD: admintest
+      DB_NAME: postgres
+      DB_PORT: 5432
     events:
       - http:
           path: vehicle
           method: put
           cors: true
+
+  reserveVehicleEvent:
+    handler: src/events/ReserveVehicleEvent.handler
+    description: Update vehicles data by SQS event
+    environment:
+      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASSWORD: admintest
+      DB_NAME: postgres
+      DB_PORT: 5432
+    events:
+      - sqs:
+          arn: arn:aws:sqs:region:uuid:sales-and-reservations-queue-dev
+          batchSize: 10
+          maximumRetryAttempts: 3
