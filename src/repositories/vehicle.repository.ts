@@ -1,8 +1,8 @@
-import { pool, Status } from "../utils";
 import { Vehicle } from "../models";
-import { CreateVehicleDTO, ListVehicleDTO, UpdateVehicleDTO } from "../dtos";
+import { pool, Status } from "../utils";
 import { VehicleQueryBuilder } from "../builders";
 import { NotFoundVehicleException } from "../exceptions";
+import { CreateVehicleDTO, ListVehicleDTO, UpdateVehicleDTO } from "../dtos";
 
 export class VehicleRepository {
   async create({ brand, model, year, price, mileage }: CreateVehicleDTO) {
@@ -54,5 +54,42 @@ export class VehicleRepository {
     const result = await pool.query<Vehicle>(query, params);
 
     return result.rows;
+  }
+
+  async getById(vehicleId: number) {
+    const queryBuilder = new VehicleQueryBuilder({
+      search: { field: "id", value: String(vehicleId) },
+    });
+
+    const { query, params } = queryBuilder.build();
+
+    const result = await pool.query<Vehicle>(query, params);
+
+    if (!result.rows.length)
+      throw new NotFoundVehicleException("Vehicule not found");
+
+    return result.rows[0];
+  }
+
+  async updateStatus(vehicleId: number, status: Status) {
+    const vehicle = await pool.query<Vehicle[]>(
+      "SELECT id FROM vehicles WHERE id = $1;",
+      [vehicleId]
+    );
+
+    if (!vehicle.rows.length)
+      throw new NotFoundVehicleException("Vehicule not found");
+
+    const query = `
+      UPDATE vehicles
+      SET status=$1
+      WHERE id=$2
+      RETURNING *;
+    `;
+    const values = [status, vehicleId];
+
+    const result = await pool.query<Vehicle>(query, values);
+
+    return result.rows[0];
   }
 }

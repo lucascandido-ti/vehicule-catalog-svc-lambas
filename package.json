@@ -9,6 +9,7 @@
         "start": "sam build --beta-features && sam local start-api --host localhost --docker-network host"
     },
     "dependencies": {
+        "@aws-sdk/client-sqs": "^3.741.0",
         "aws-sdk": "^2.1565.0",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.13.2",

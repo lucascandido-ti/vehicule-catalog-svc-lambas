@@ -12,8 +12,14 @@ export class VehicleQueryBuilder {
   private applySearch() {
     if (this.dto.search) {
       const paramIndex = this.queryParams.length + 1;
-      this.whereClauses.push(`${this.dto.search.field} ILIKE $${paramIndex}`);
-      this.queryParams.push(`%${this.dto.search.value}%`);
+
+      if (isNaN(Number(this.dto.search.value))) {
+        this.whereClauses.push(`${this.dto.search.field} ILIKE $${paramIndex}`);
+        this.queryParams.push(`%${this.dto.search.value}%`);
+      } else {
+        this.whereClauses.push(`${this.dto.search.field} = $${paramIndex}`);
+        this.queryParams.push(`${this.dto.search.value}`);
+      }
     }
   }
 
@@ -25,11 +31,13 @@ export class VehicleQueryBuilder {
   }
 
   private applyPagination() {
-    const skipIndex = this.queryParams.length + 1;
-    const takeIndex = this.queryParams.length + 2;
+    if (this.dto.skip || this.dto.take) {
+      const skipIndex = this.queryParams.length + 1;
+      const takeIndex = this.queryParams.length + 2;
 
-    this.limitOffsetClause = `LIMIT $${takeIndex} OFFSET $${skipIndex}`;
-    this.queryParams.push(this.dto.skip, this.dto.take);
+      this.limitOffsetClause = `LIMIT $${takeIndex} OFFSET $${skipIndex}`;
+      this.queryParams.push(this.dto.skip, this.dto.take);
+    }
   }
 
   public build(): { query: string; params: any[] } {

@@ -29,14 +29,14 @@ export class ListVehicleDTO {
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
-  skip = 0;
+  skip? = 0;
 
   @Max(100)
   @Min(0)
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
-  take = 10;
+  take? = 10;
 
   @IsIn(sortOptions)
   @IsString()
