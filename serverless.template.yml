@@ -5,11 +5,32 @@ provider:
   runtime: nodejs22.x
   stage: dev
   region: us-east-1
-  memorySize: 128
-  timeout: 3
+  iam:
+    role:
+      statements:
+        # Permissões para SQS
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+          Resource:
+            - !GetAtt MyQueue.Arn
+        # Permissões para SNS
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource:
+            - !Ref MySNSTopic
+        # Permissões para SES
+        - Effect: Allow
+          Action:
+            - ses:SendEmail
+            - ses:SendRawEmail
+          Resource: "*"
   environment:
     VEHICLE_TABLE: vehicles
-    SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+    SQS_SALES_AND_RESERVE_URL: !Ref MyQueue
     DB_HOST: localhost
     DB_USER: postgres
     DB_PASSWORD: admintest
@@ -21,7 +42,7 @@ functions:
     handler: src/handlers/CreateVehicle.handler
     description: Create New Vehicles
     environment:
-      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      SQS_SALES_AND_RESERVE_URL: !Ref MyQueue
       DB_HOST: localhost
       DB_USER: postgres
       DB_PASSWORD: admintest
@@ -37,7 +58,7 @@ functions:
     handler: src/handlers/ListVehicles.handler
     description: List all vehicles
     environment:
-      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      SQS_SALES_AND_RESERVE_URL: !Ref MyQueue
       DB_HOST: localhost
       DB_USER: postgres
       DB_PASSWORD: admintest
@@ -53,7 +74,7 @@ functions:
     handler: src/handlers/GetVehicleById.handler
     description: Get vehicle by id
     environment:
-      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      SQS_SALES_AND_RESERVE_URL: !Ref MyQueue
       DB_HOST: localhost
       DB_USER: postgres
       DB_PASSWORD: admintest
@@ -69,7 +90,7 @@ functions:
     handler: src/handlers/UpdateVehicle.handler
     description: Update vehicles data
     environment:
-      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      SQS_SALES_AND_RESERVE_URL: !Ref MyQueue
       DB_HOST: localhost
       DB_USER: postgres
       DB_PASSWORD: admintest
@@ -85,7 +106,7 @@ functions:
     handler: src/events/ReserveVehicleEvent.handler
     description: Update vehicles data by SQS event
     environment:
-      SQS_SALES_AND_RESERVE_URL: https://localhost:3333/sales-and-reservations-queue-dev
+      SQS_SALES_AND_RESERVE_URL: !Ref MyQueue
       DB_HOST: localhost
       DB_USER: postgres
       DB_PASSWORD: admintest
@@ -93,6 +114,71 @@ functions:
       DB_PORT: 5432
     events:
       - sqs:
-          arn: arn:aws:sqs:region:uuid:sales-and-reservations-queue-dev
+          arn: !GetAtt MyQueue.Arn
           batchSize: 10
           maximumRetryAttempts: 3
+
+  soldVehicleEvent:
+    handler: src/events/SoldVehicleEvent.handler
+    description: Update vehicles data by Sold event
+    environment:
+      SQS_SALES_AND_RESERVE_URL: !Ref MyQueue
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASSWORD: admintest
+      DB_NAME: postgres
+      DB_PORT: 5432
+    events:
+      - sqs:
+          arn: !GetAtt MyQueue.Arn
+          batchSize: 10
+          maximumRetryAttempts: 3
+
+  vehicleReservationCancellationEvent:
+    handler: src/events/VehicleReservationCancellationEvent.handler
+    description: Update vehicles data by reservation cancellation event
+    environment:
+      SQS_SALES_AND_RESERVE_URL: !Ref MyQueue
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASSWORD: admintest
+      DB_NAME: postgres
+      DB_PORT: 5432
+    events:
+      - sqs:
+          arn: !GetAtt MyQueue.Arn
+          batchSize: 10
+          maximumRetryAttempts: 3
+
+resources:
+  Resources:
+    # Configuração da Fila SQS (com DLQ opcional)
+    MyQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-queue-${sls:stage}
+        VisibilityTimeout: 30
+        MessageRetentionPeriod: 1209600 # 14 dias
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt MyDLQ.Arn
+          maxReceiveCount: 3
+
+    # Dead Letter Queue (DLQ)
+    MyDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-dlq-${sls:stage}
+        MessageRetentionPeriod: 1209600
+
+    # Tópico SNS
+    MySNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-topic-${sls:stage}
+        DisplayName: MyServerlessTopic
+
+    # Configuração SES (Identity)
+    MySESIdentity:
+      Type: AWS::SES::EmailIdentity
+      Properties:
+        EmailIdentity: user@example.com
